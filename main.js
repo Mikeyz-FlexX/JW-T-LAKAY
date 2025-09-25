@@ -1,4 +1,4 @@
-// main.js - Logique de l'application Jwèt Lakay
+// main.js - Logique de l'application Jwèt Lakay (Version corrigée)
 
 // Variables globales
 let currentUser = null;
@@ -6,13 +6,26 @@ let cart = [];
 let orders = JSON.parse(localStorage.getItem('orders')) || [];
 let users = JSON.parse(localStorage.getItem('users')) || [];
 
+// Informations de paiement mises à jour
+const paymentInfo = {
+    moncash: {
+        name: "Marcco Bien Aimé",
+        number: "+50939442808"
+    },
+    natcash: {
+        name: "Pierre Louis Jinolyse",
+        number: "+50939442808"
+    }
+};
+
 // Produits disponibles
 const products = [
-    { id: 1, name: "110 Diamants", price: 165, icon: "💎", description: "Pack de démarrage" },
-    { id: 2, name: "220 Diamants", price: 330, icon: "💎", description: "Pack standard" },
-    { id: 3, name: "572 Diamants", price: 825, icon: "💎", description: "Pack valeur" },
-    { id: 4, name: "1160 Diamants", price: 1650, icon: "💎", description: "Pack premium" },
-    { id: 5, name: "2398 Diamants", price: 3300, icon: "💎", description: "Pack deluxe" },
+    { id: 1, name: "100 Diamants", price: 100, icon: "💎", description: "Pack de démarrage" },
+    { id: 2, name: "310 Diamants", price: 300, icon: "💎💎", description: "Pack standard" },
+    { id: 3, name: "520 Diamants", price: 500, icon: "💎💎💎", description: "Pack valeur" },
+    { id: 4, name: "1060 Diamants", price: 1000, icon: "💎💎💎💎", description: "Pack premium" },
+    { id: 5, name: "2180 Diamants", price: 2000, icon: "💎💎💎💎💎", description: "Pack deluxe" },
+    { id: 6, name: "5600 Diamants", price: 5000, icon: "💎💎💎💎💎💎", description: "Pack ultimate" }
 ];
 
 // Initialisation de l'application
@@ -40,6 +53,9 @@ function initializeApp() {
     
     // Afficher les produits
     displayProducts();
+    
+    // Mettre à jour les informations de paiement dans l'interface
+    updatePaymentInfo();
     
     // Mettre à jour les statistiques admin
     updateAdminStats();
@@ -100,6 +116,21 @@ function setupEventListeners() {
 
     // Formulaire de contact
     document.getElementById('contact-form').addEventListener('submit', handleContactForm);
+}
+
+// Mettre à jour les informations de paiement dans l'interface
+function updatePaymentInfo() {
+    // Mettre à jour MonCash
+    document.querySelector('#moncash-method .payment-info').innerHTML = `
+        <p><strong>Numéro:</strong> ${paymentInfo.moncash.number}</p>
+        <p><strong>Nom:</strong> ${paymentInfo.moncash.name}</p>
+    `;
+    
+    // Mettre à jour NatCash
+    document.querySelector('#natcash-method .payment-info').innerHTML = `
+        <p><strong>Numéro:</strong> ${paymentInfo.natcash.number}</p>
+        <p><strong>Nom:</strong> ${paymentInfo.natcash.name}</p>
+    `;
 }
 
 // Gestion de l'affichage des pages
@@ -189,7 +220,7 @@ function handleRegister(e) {
         phone,
         password,
         registrationDate: new Date().toLocaleDateString('fr-FR'),
-        isAdmin: email === 'admin@jwètlakay.com' // Premier admin
+        isAdmin: email === 'adminjwetlakay@gmail.com' // Admin spécifique
     };
 
     users.push(newUser);
@@ -210,7 +241,6 @@ function handleLogout() {
 function updateUIForUser() {
     const adminLink = document.querySelector('.admin-link');
     const logoutBtn = document.getElementById('logout-btn');
-    const navLinks = document.querySelectorAll('nav a[data-page]');
 
     if (currentUser) {
         // Masquer la connexion, afficher les autres pages
@@ -375,29 +405,51 @@ function handleNatCashPayment(e) {
 function processPayment(method) {
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    const order = {
-        id: Date.now(),
-        userId: currentUser.id,
-        userName: currentUser.name,
-        items: [...cart],
-        total: total,
-        paymentMethod: method,
-        status: 'pending',
-        date: new Date().toLocaleString('fr-FR'),
-        freeFireId: document.getElementById(method === 'moncash' ? 'freefire-id' : 'freefire-id-natcash').value
-    };
+    // Récupérer les informations du formulaire de paiement
+    const paymentName = document.getElementById(`${method}-name`).value;
+    const paymentNumber = document.getElementById(`${method}-number`).value;
+    const freeFireId = document.getElementById(method === 'moncash' ? 'freefire-id' : 'freefire-id-natcash').value;
+    const screenshotFile = document.getElementById(`${method}-screenshot`).files[0];
 
-    orders.push(order);
-    localStorage.setItem('orders', JSON.stringify(orders));
-    
-    // Vider le panier
-    clearCart();
-    
-    // Cacher la section paiement
-    document.getElementById('payment-section').style.display = 'none';
-    
-    showNotification('Commande passée avec succès! Nous traiterons votre demande rapidement.', 'success');
-    showPage('accueil');
+    if (!screenshotFile) {
+        showNotification('Veuillez uploader une preuve de paiement', 'error');
+        return;
+    }
+
+    // Convertir l'image en base64 pour le stockage
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const order = {
+            id: Date.now(),
+            userId: currentUser.id,
+            userName: currentUser.name,
+            userEmail: currentUser.email,
+            items: [...cart],
+            total: total,
+            paymentMethod: method,
+            paymentDetails: {
+                name: paymentName,
+                number: paymentNumber,
+                freeFireId: freeFireId,
+                screenshot: e.target.result // Stocker l'image en base64
+            },
+            status: 'pending',
+            date: new Date().toLocaleString('fr-FR')
+        };
+
+        orders.push(order);
+        localStorage.setItem('orders', JSON.stringify(orders));
+        
+        // Vider le panier
+        clearCart();
+        
+        // Cacher la section paiement
+        document.getElementById('payment-section').style.display = 'none';
+        
+        showNotification('Commande passée avec succès! Nous traiterons votre demande rapidement.', 'success');
+        showPage('accueil');
+    };
+    reader.readAsDataURL(screenshotFile);
 }
 
 // Gestion de l'administration
@@ -415,11 +467,16 @@ function displayOrders() {
     const tbody = document.getElementById('orders-table-body');
     tbody.innerHTML = '';
 
-    orders.filter(order => order.status === 'pending').forEach(order => {
+    // Afficher toutes les commandes (pas seulement en attente)
+    orders.forEach(order => {
+        const user = users.find(u => u.id === order.userId);
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>#${order.id}</td>
-            <td>${order.userName}</td>
+            <td>
+                <strong>${order.userName}</strong><br>
+                <small>${order.userEmail}</small>
+            </td>
             <td>${order.items.map(item => `${item.name} (x${item.quantity})`).join(', ')}</td>
             <td>${order.total} HTG</td>
             <td>${order.paymentMethod}</td>
@@ -433,10 +490,91 @@ function displayOrders() {
                 </select>
             </td>
             <td>
+                <button onclick="showOrderDetails(${order.id})" class="btn">Détails</button>
                 <button onclick="deleteOrder(${order.id})" class="btn-secondary">Supprimer</button>
             </td>
         `;
         tbody.appendChild(row);
+    });
+}
+
+function showOrderDetails(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    // Créer une modal pour afficher les détails
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    `;
+
+    modal.innerHTML = `
+        <div class="modal-content" style="
+            background: #1a2a6c;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        ">
+            <h2 style="color: #ff9900; margin-bottom: 20px;">Détails de la commande #${order.id}</h2>
+            
+            <div class="order-details">
+                <div class="detail-section">
+                    <h3 style="color: #ff9900;">Informations client</h3>
+                    <p><strong>Nom:</strong> ${order.userName}</p>
+                    <p><strong>Email:</strong> ${order.userEmail}</p>
+                </div>
+
+                <div class="detail-section">
+                    <h3 style="color: #ff9900;">Détails de la commande</h3>
+                    <p><strong>Total:</strong> ${order.total} HTG</p>
+                    <p><strong>Méthode de paiement:</strong> ${order.paymentMethod}</p>
+                    <p><strong>Date:</strong> ${order.date}</p>
+                    <p><strong>Statut:</strong> ${getStatusText(order.status)}</p>
+                </div>
+
+                <div class="detail-section">
+                    <h3 style="color: #ff9900;">Informations de paiement</h3>
+                    <p><strong>Nom ${order.paymentMethod}:</strong> ${order.paymentDetails.name}</p>
+                    <p><strong>Numéro ${order.paymentMethod}:</strong> ${order.paymentDetails.number}</p>
+                    <p><strong>ID Free Fire:</strong> ${order.paymentDetails.freeFireId}</p>
+                </div>
+
+                <div class="detail-section">
+                    <h3 style="color: #ff9900;">Preuve de paiement</h3>
+                    <img src="${order.paymentDetails.screenshot}" alt="Preuve de paiement" style="
+                        max-width: 100%;
+                        border-radius: 5px;
+                        margin-top: 10px;
+                    ">
+                </div>
+
+                <div class="modal-actions" style="margin-top: 20px; text-align: center;">
+                    <button onclick="this.closest('.modal').remove()" class="btn">Fermer</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Fermer la modal en cliquant à l'extérieur
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
     });
 }
 
@@ -463,9 +601,9 @@ function deleteOrder(orderId) {
 
 function exportOrders() {
     const csvContent = "data:text/csv;charset=utf-8," 
-        + "ID,Client,Produits,Montant,Méthode,Date,Statut\n"
+        + "ID,Client,Email,Produits,Montant,Méthode,Date,Statut\n"
         + orders.map(order => 
-            `"${order.id}","${order.userName}","${order.items.map(item => item.name).join(', ')}","${order.total}","${order.paymentMethod}","${order.date}","${order.status}"`
+            `"${order.id}","${order.userName}","${order.userEmail}","${order.items.map(item => item.name).join(', ')}","${order.total}","${order.paymentMethod}","${order.date}","${order.status}"`
         ).join("\n");
     
     const encodedUri = encodeURI(csvContent);
@@ -607,15 +745,16 @@ window.clearAllOrders = clearAllOrders;
 window.hideNotification = hideNotification;
 window.updateOrderStatus = updateOrderStatus;
 window.deleteOrder = deleteOrder;
+window.showOrderDetails = showOrderDetails;
 
 // Créer un utilisateur admin par défaut au premier chargement
 if (users.length === 0) {
     const adminUser = {
         id: 1,
-        email: 'admin@jwètlakay.com',
-        name: 'Administrateur',
-        phone: '+50900000000',
-        password: 'admin123',
+        email: 'adminjwetlakay@gmail.com',
+        name: 'Administrateur Jwèt Lakay',
+        phone: '+50939442808',
+        password: 'Admin123@',
         registrationDate: new Date().toLocaleDateString('fr-FR'),
         isAdmin: true
     };
