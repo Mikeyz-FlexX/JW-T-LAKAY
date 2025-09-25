@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jwèt Lakay - Top Up Free Fire</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo-container">
+                <div class="logo">JL</div>
+                <div class="logo-text">Jwèt Lakay</div>
+            </div>
+            <div class="nav-container">
+                <button class="menu-toggle">☰</button>
+                <nav>
+                    <ul>
+                        <li><a href="#" data-page="accueil">Accueil</a></li>
+                        <li><a href="#" data-page="topup">Top Up</a></li>
+                        <li><a href="#" data-page="panier">Panier</a></li>
+                        <li><a href="#" data-page="admin" class="admin-link" style="display: none;">Admin</a></li>
+                        <li><a href="#" data-page="profil">Profil</a></li>
+                        <li><a href="#" data-page="apropos">À propos</a></li>
+                        <li><a href="#" data-page="contact">Contact</a></li>
+                        <li><a href="#" id="logout-btn">Déconnexion</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Page de connexion -->
+        <div id="connexion" class="page active">
+            <div class="auth-form">
+                <h2 class="form-title">Connexion</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Mot de passe</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit" class="btn">Se connecter</button>
+                </form>
+                <div class="form-footer">
+                    <p>Pas encore de compte? <a href="#" id="show-register">S'inscrire</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page d'inscription -->
+        <div id="inscription" class="page">
+            <div class="auth-form">
+                <h2 class="form-title">Inscription</h2>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input type="email" id="register-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-name">Nom complet</label>
+                        <input type="text" id="register-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-phone">Numéro de téléphone</label>
+                        <input type="tel" id="register-phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Mot de passe</label>
+                        <input type="password" id="register-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-confirm">Confirmation du mot de passe</label>
+                        <input type="password" id="register-confirm" required>
+                    </div>
+                    <button type="submit" class="btn">S'inscrire</button>
+                </form>
+                <div class="form-footer">
+                    <p>Déjà inscrit? <a href="#" id="show-login">Se connecter</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page d'accueil -->
+        <div id="accueil" class="page">
+            <div class="welcome-section">
+                <h1 class="welcome-title">Bienvenue sur Jwèt Lakay</h1>
+                <p class="welcome-subtitle">Votre destination pour le top-up Free Fire en Haïti</p>
+            </div>
+            
+            <div class="products-grid">
+                <div class="product-card" data-product="100" data-price="165">
+                    <div class="product-icon">💎</div>
+                    <h3 class="product-title">100 +10 Diamants</h3>
+                    <p class="product-price">165 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+                
+                <div class="product-card" data-product="200" data-price="330">
+                    <div class="product-icon">💎</div>
+                    <h3 class="product-title">200 +20 Diamants</h3>
+                    <p class="product-price">330 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+                
+                <div class="product-card" data-product="310" data-price="495">
+                    <div class="product-icon">💎</div>
+                    <h3 class="product-title">310 +41 Diamants</h3>
+                    <p class="product-price">495 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+                
+                <div class="product-card" data-product="520" data-price="825">
+                    <div class="product-icon">💎</div>
+                    <h3 class="product-title">520 +52 Diamants</h3>
+                    <p class="product-price">825 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+                
+                <div class="product-card" data-product="1060" data-price="1650">
+                    <div class="product-icon">💎</div>
+                    <h3 class="product-title">1060 +106 Diamants</h3>
+                    <p class="product-price">1650 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+                
+                <div class="product-card" data-product="2180" data-price="3300">
+                    <div class="product-icon">💎</div>
+                    <h3 class="product-title">2180 +218 Diamants</h3>
+                    <p class="product-price">3300 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+                
+                <div class="product-card" data-product="abonnement-hebdo" data-price="400">
+                    <div class="product-icon">📅</div>
+                    <h3 class="product-title">Abonnement Hebdomadaire</h3>
+                    <p class="product-price">400 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+                
+                <div class="product-card" data-product="abonnement-mensuel" data-price="1700">
+                    <div class="product-icon">📅</div>
+                    <h3 class="product-title">Abonnement Mensuel</h3>
+                    <p class="product-price">1700 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Top Up (identique à la page d'accueil) -->
+        <div id="topup" class="page">
+            <div class="welcome-section">
+                <h1 class="welcome-title">Top Up Free Fire</h1>
+                <p class="welcome-subtitle">Choisissez votre pack de diamants</p>
+            </div>
+            
+            <div class="products-grid">
+                <div class="product-card" data-product="100" data-price="165">
+                    <div class="product-icon">💎</div>
+                    <h3 class="product-title">100 +10 Diamants</h3>
+                    <p class="product-price">165 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+                
+                <div class="product-card" data-product="200" data-price="330">
+                    <div class="product-icon">💎</div>
+                    <h3 class="product-title">200 +20 Diamants</h3>
+                    <p class="product-price">330 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+                
+                <div class="product-card" data-product="310" data-price="495">
+                    <div class="product-icon">💎</div>
+                    <h3 class="product-title">310 +41 Diamants</h3>
+                    <p class="product-price">495 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+                
+                <div class="product-card" data-product="520" data-price="825">
+                    <div class="product-icon">💎</div>
+                    <h3 class="product-title">520 +52 Diamants</h3>
+                    <p class="product-price">825 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+                
+                <div class="product-card" data-product="1060" data-price="1650">
+                    <div class="product-icon">💎</div>
+                    <h3 class="product-title">1060 +106 Diamants</h3>
+                    <p class="product-price">1650 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+                
+                <div class="product-card" data-product="2180" data-price="3300">
+                    <div class="product-icon">💎</div>
+                    <h3 class="product-title">2180 +218 Diamants</h3>
+                    <p class="product-price">3300 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+                
+                <div class="product-card" data-product="abonnement-hebdo" data-price="400">
+                    <div class="product-icon">📅</div>
+                    <h3 class="product-title">Abonnement Hebdomadaire</h3>
+                    <p class="product-price">400 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+                
+                <div class="product-card" data-product="abonnement-mensuel" data-price="1700">
+                    <div class="product-icon">📅</div>
+                    <h3 class="product-title">Abonnement Mensuel</h3>
+                    <p class="product-price">1700 HTG</p>
+                    <button class="add-to-cart">Ajouter au panier</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Panier -->
+        <div id="panier" class="page">
+            <h2 class="form-title">Votre Panier</h2>
+            
+            <div class="cart-items" id="cart-items">
+                <!-- Les articles du panier seront ajoutés ici dynamiquement -->
+            </div>
+            
+            <div class="cart-total" id="cart-total">
+                Total: 0 HTG
+            </div>
+            
+            <h3 class="form-title">Choisissez votre méthode de paiement</h3>
+            
+            <div class="payment-methods">
+                <div class="payment-method" id="moncash-method">
+                    <div class="payment-icon">📱</div>
+                    <h3>MonCash</h3>
+                    <div class="payment-info">
+                        <p><strong>Numéro:</strong> +50944994542</p>
+                        <p><strong>Nom:</strong> Regis frantz lopez</p>
+                    </div>
+                </div>
+                
+                <div class="payment-method" id="natcash-method">
+                    <div class="payment-icon">📱</div>
+                    <h3>NatCash</h3>
+                    <div class="payment-info">
+                        <p><strong>Numéro:</strong> +50935071266</p>
+                        <p><strong>Nom:</strong> Fernande Wasembeck</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="payment-form" id="moncash-form" style="display: none;">
+                <h3 class="form-title">Paiement via MonCash</h3>
+                <form id="moncash-payment-form">
+                    <div class="form-group">
+                        <label for="moncash-name">Nom MonCash</label>
+                        <input type="text" id="moncash-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="moncash-number">Numéro MonCash</label>
+                        <input type="text" id="moncash-number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="moncash-amount">Montant envoyé</label>
+                        <input type="number" id="moncash-amount" required readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="freefire-id">ID du compte Free Fire</label>
+                        <input type="text" id="freefire-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="moncash-screenshot">Preuve de paiement (screenshot)</label>
+                        <input type="file" id="moncash-screenshot" class="file-upload" accept="image/*" required>
+                    </div>
+                    <button type="submit" class="btn">Valider le paiement</button>
+                </form>
+            </div>
+            
+            <div class="payment-form" id="natcash-form" style="display: none;">
+                <h3 class="form-title">Paiement via NatCash</h3>
+                <form id="natcash-payment-form">
+                    <div class="form-group">
+                        <label for="natcash-name">Nom NatCash</label>
+                        <input type="text" id="natcash-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="natcash-number">Numéro NatCash</label>
+                        <input type="text" id="natcash-number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="natcash-amount">Montant envoyé</label>
+                        <input type="number" id="natcash-amount" required readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="freefire-id-natcash">ID du compte Free Fire</label>
+                        <input type="text" id="freefire-id-natcash" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="natcash-screenshot">Preuve de paiement (screenshot)</label>
+                        <input type="file" id="natcash-screenshot" class="file-upload" accept="image/*" required>
+                    </div>
+                    <button type="submit" class="btn">Valider le paiement</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Page Admin -->
+        <div id="admin" class="page">
+            <div class="admin-section">
+                <h2 class="admin-title">Panel d'Administration</h2>
+                <p>Bienvenue dans le panel d'administration de Jwèt Lakay.</p>
+                
+                <h3 style="margin-top: 30px; color: #ff9900;">Commandes en attente</h3>
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>ID Commande</th>
+                            <th>Client</th>
+                            <th>Produit</th>
+                            <th>Montant</th>
+                            <th>Méthode</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body">
+                        <!-- Les commandes seront ajoutées ici dynamiquement -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Page Profil -->
+        <div id="profil" class="page">
+            <div class="profile-info">
+                <h2 class="form-title">Votre Profil</h2>
+                <div class="profile-field">
+                    <div class="profile-label">Nom complet</div>
+                    <div id="profile-name">-</div>
+                </div>
+                <div class="profile-field">
+                    <div class="profile-label">Email</div>
+                    <div id="profile-email">-</div>
+                </div>
+                <div class="profile-field">
+                    <div class="profile-label">Numéro de téléphone</div>
+                    <div id="profile-phone">-</div>
+                </div>
+                <div class="profile-field">
+                    <div class="profile-label">Date d'inscription</div>
+                    <div id="profile-date">-</div>
+                </div>
+            </div>
+            
+            <h3 class="form-title">Historique des commandes</h3>
+            <div id="order-history">
+                <!-- L'historique des commandes sera ajouté ici dynamiquement -->
+                <p style="text-align: center; margin-top: 20px;">Aucune commande passée pour le moment.</p>
+            </div>
+        </div>
+
+        <!-- Page À propos -->
+        <div id="apropos" class="page">
+            <div class="about-section">
+                <h2 class="form-title">À propos de Jwèt Lakay</h2>
+                <p>Jwèt Lakay est votre plateforme de confiance pour le top-up de diamants Free Fire en Haïti. Nous nous engageons à fournir un service rapide, sécurisé et fiable à tous les joueurs de Free Fire.</p>
+                
+                <p>Notre mission est de simplifier l'achat de diamants pour améliorer votre expérience de jeu. Avec Jwèt Lakay, vous pouvez recharger votre compte Free Fire en quelques minutes seulement, sans tracas.</p>
+                
+                <p>Nous acceptons les paiements via MonCash et NatCash pour votre commodité. Toutes les transactions sont sécurisées et traitées rapidement.</p>
+                
+                <p>Merci de choisir Jwèt Lakay pour vos besoins de top-up Free Fire!</p>
+            </div>
+        </div>
+
+        <!-- Page Contact -->
+        <div id="contact" class="page">
+            <div class="contact-section">
+                <h2 class="form-title">Contactez-nous</h2>
+                <p>Pour toute question, problème ou suggestion, n'hésitez pas à nous contacter:</p>
+                
+                <div class="contact-info">
+                    <p><strong>Email:</strong> support@jwètlakay.com</p>
+                    <p><strong>Téléphone:</strong> +509 44 99 45 42</p>
+                    <p><strong>Heures d'ouverture:</strong> Lundi - Dimanche, 8h00 - 22h00</p>
+                </div>
+                
+                <form style="margin-top: 30px;">
+                    <div class="form-group">
+                        <label for="contact-name">Votre nom</label>
+                        <input type="text" id="contact-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-email">Votre email</label>
+                        <input type="email" id="contact-email">
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-message">Votre message</label>
+                        <textarea id="contact-message" rows="5" style="width: 100%; padding: 12px 15px; border-radius: 5px; border: none;"></textarea>
+                    </div>
+                    <button type="submit" class="btn">Envoyer le message</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
