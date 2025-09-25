@@ -25,6 +25,8 @@ const products = [
     { id: 3, name: "572 Diamants", price: 825, icon: "💎", description: "Pack valeur" },
     { id: 4, name: "1160 Diamants", price: 1650, icon: "💎", description: "Pack premium" },
     { id: 5, name: "2398 Diamants", price: 3300, icon: "💎", description: "Pack deluxe" },
+    { id: 6, name: "Abonnement hebdo", price: 400, icon: "📆", description: "Pro" },
+    { id: 7, name: "Abonnement mensuel", price: 1700, icon: "📆", description: "Premium" },
 ];
 
 // Initialisation de l'application
