@@ -613,7 +613,7 @@ window.deleteOrder = deleteOrder;
 if (users.length === 0) {
     const adminUser = {
         id: 1,
-        email: 'admin@jwètlakay.com',
+        email: 'admin@jwetlakay.com',
         name: 'Administrateur',
         phone: '+50900000000',
         password: 'admin123',
