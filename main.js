@@ -1,13 +1,12 @@
-// main.js - VERSION CORRIGÉE ET TESTÉE
+// main.js - Version complète mise à jour pour Jwèt Lakay
 const App = {
     // Variables globales
     currentUser: null,
     cart: [],
     orders: JSON.parse(localStorage.getItem('orders')) || [],
     users: JSON.parse(localStorage.getItem('users')) || [],
-    soundEnabled: true,
 
-    // Informations de paiement
+    // Informations de paiement mises à jour
     paymentInfo: {
         moncash: {
             name: "Marcco Bien Aimé",
@@ -30,7 +29,7 @@ const App = {
         { id: 7, name: "Abonnement mensuel", price: 1700, icon: "📆", description: "Premium" },
     ],
 
-    // Initialisation
+    // Initialisation de l'application
     init() {
         this.initializeApp();
     },
@@ -50,9 +49,16 @@ const App = {
             this.updateCartDisplay();
         }
 
+        // Initialiser les écouteurs d'événements
         this.setupEventListeners();
+        
+        // Afficher les produits
         this.displayProducts();
+        
+        // Mettre à jour les informations de paiement dans l'interface
         this.updatePaymentInfo();
+        
+        // Mettre à jour les statistiques admin
         this.updateAdminStats();
 
         // Créer un utilisateur admin par défaut au premier chargement
@@ -76,7 +82,7 @@ const App = {
     },
 
     setupEventListeners() {
-        // Navigation - CORRIGÉ
+        // Navigation
         document.querySelectorAll('nav a[data-page]').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -85,10 +91,12 @@ const App = {
             });
         });
 
-        // Menu mobile - CORRIGÉ
+        // Menu mobile
         document.querySelector('.menu-toggle').addEventListener('click', () => {
             const nav = document.querySelector('nav ul');
             nav.classList.toggle('show');
+            const isExpanded = nav.classList.contains('show');
+            document.querySelector('.menu-toggle').setAttribute('aria-expanded', isExpanded);
         });
 
         // Formulaire de connexion
@@ -98,7 +106,7 @@ const App = {
         document.getElementById('register-form').addEventListener('submit', (e) => this.handleRegister(e));
         document.getElementById('register-password').addEventListener('input', () => this.updatePasswordStrength());
 
-        // Navigation entre connexion/inscription - CORRIGÉ
+        // Navigation entre connexion/inscription
         document.getElementById('show-register').addEventListener('click', (e) => {
             e.preventDefault();
             this.showPage('inscription');
@@ -131,6 +139,9 @@ const App = {
 
         // Formulaire de contact
         document.getElementById('contact-form').addEventListener('submit', (e) => this.handleContactForm(e));
+
+        // Modal de confirmation
+        document.getElementById('modal-cancel-btn').addEventListener('click', () => this.hideConfirmationModal());
     },
 
     // Mettre à jour les informations de paiement dans l'interface
@@ -144,10 +155,8 @@ const App = {
         document.getElementById('natcash-number').textContent = this.paymentInfo.natcash.number;
     },
 
-    // Gestion de l'affichage des pages - CORRIGÉ
+    // Gestion de l'affichage des pages
     showPage(pageName) {
-        console.log('Chargement de la page:', pageName); // Debug
-        
         // Masquer toutes les pages
         document.querySelectorAll('.page').forEach(page => {
             page.classList.remove('active');
@@ -157,9 +166,6 @@ const App = {
         const targetPage = document.getElementById(pageName);
         if (targetPage) {
             targetPage.classList.add('active');
-            
-            // Masquer le menu mobile après clic
-            document.querySelector('nav ul').classList.remove('show');
             
             // Mettre à jour l'interface selon la page
             switch(pageName) {
@@ -184,36 +190,50 @@ const App = {
                     }
                     break;
             }
-        } else {
-            console.error('Page non trouvée:', pageName);
         }
     },
 
-    // Gestion de l'authentification - CORRIGÉ
+    // Gestion de l'authentification
     handleLogin(e) {
         e.preventDefault();
-        console.log('Tentative de connexion'); // Debug
         
         const email = document.getElementById('login-email').value;
         const password = document.getElementById('login-password').value;
 
-        // Vérifier les informations de connexion
-        const user = this.users.find(u => u.email === email && u.password === password);
-        
-        if (user) {
-            this.currentUser = user;
-            localStorage.setItem('currentUser', JSON.stringify(user));
-            this.updateUIForUser();
-            this.showNotification('Connexion réussie!', 'success');
-            this.showPage('accueil');
-        } else {
-            this.showNotification('Email ou mot de passe incorrect', 'error');
+        // Valider les champs
+        if (!this.validateEmail(email)) {
+            this.showError('login-email', 'Email invalide');
+            return;
         }
+
+        if (!password) {
+            this.showError('login-password', 'Le mot de passe est requis');
+            return;
+        }
+
+        this.setButtonLoading('login-btn', true);
+
+        // Simuler un délai de traitement
+        setTimeout(() => {
+            // Vérifier les informations de connexion
+            const user = this.users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                this.currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                this.updateUIForUser();
+                this.showNotification('Connexion réussie!', 'success');
+                this.showPage('accueil');
+            } else {
+                this.showNotification('Email ou mot de passe incorrect', 'error');
+            }
+
+            this.setButtonLoading('login-btn', false);
+        }, 1000);
     },
 
     handleRegister(e) {
         e.preventDefault();
-        console.log('Tentative d\'inscription'); // Debug
         
         const email = document.getElementById('register-email').value;
         const name = document.getElementById('register-name').value;
@@ -221,33 +241,59 @@ const App = {
         const password = document.getElementById('register-password').value;
         const confirmPassword = document.getElementById('register-confirm').value;
 
-        // Vérifications
-        if (password !== confirmPassword) {
-            this.showNotification('Les mots de passe ne correspondent pas', 'error');
+        // Validation des champs
+        if (!this.validateEmail(email)) {
+            this.showError('register-email', 'Email invalide');
             return;
         }
 
-        if (users.find(u => u.email === email)) {
+        if (!name) {
+            this.showError('register-name', 'Le nom est requis');
+            return;
+        }
+
+        if (!this.validatePhone(phone)) {
+            this.showError('register-phone', 'Numéro de téléphone invalide');
+            return;
+        }
+
+        if (password.length < 8) {
+            this.showError('register-password', 'Le mot de passe doit contenir au moins 8 caractères');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            this.showError('register-confirm', 'Les mots de passe ne correspondent pas');
+            return;
+        }
+
+        if (this.users.find(u => u.email === email)) {
             this.showNotification('Cet email est déjà utilisé', 'error');
             return;
         }
 
-        // Créer le nouvel utilisateur
-        const newUser = {
-            id: Date.now(),
-            email,
-            name,
-            phone,
-            password,
-            registrationDate: new Date().toLocaleDateString('fr-FR'),
-            isAdmin: email === 'adminjwetlakay@gmail.com'
-        };
+        this.setButtonLoading('register-btn', true);
 
-        this.users.push(newUser);
-        localStorage.setItem('users', JSON.stringify(this.users));
-        
-        this.showNotification('Inscription réussie! Vous pouvez maintenant vous connecter.', 'success');
-        this.showPage('connexion');
+        // Simuler un délai d'inscription
+        setTimeout(() => {
+            // Créer le nouvel utilisateur
+            const newUser = {
+                id: Date.now(),
+                email,
+                name,
+                phone,
+                password,
+                registrationDate: new Date().toLocaleDateString('fr-FR'),
+                isAdmin: email === 'adminjwetlakay@gmail.com'
+            };
+
+            this.users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(this.users));
+            
+            this.showNotification('Inscription réussie! Vous pouvez maintenant vous connecter.', 'success');
+            this.showPage('connexion');
+            this.setButtonLoading('register-btn', false);
+        }, 1000);
     },
 
     handleLogout(e) {
@@ -283,23 +329,19 @@ const App = {
     // Gestion des produits
     displayProducts() {
         const grid = document.getElementById('products-grid');
-        if (!grid) {
-            console.error('Element products-grid non trouvé');
-            return;
-        }
-        
         grid.innerHTML = '';
 
         this.products.forEach(product => {
             const productCard = document.createElement('div');
             productCard.className = 'product-card';
+            productCard.setAttribute('role', 'listitem');
             productCard.innerHTML = `
                 <div class="product-badge">Populaire</div>
-                <div class="product-icon">${product.icon}</div>
+                <div class="product-icon" aria-hidden="true">${product.icon}</div>
                 <h3 class="product-title">${product.name}</h3>
                 <p class="product-description">${product.description}</p>
                 <div class="product-price">${product.price} HTG</div>
-                <button class="add-to-cart" onclick="App.addToCart(${product.id})">
+                <button class="add-to-cart" onclick="App.addToCart(${product.id})" aria-label="Ajouter ${product.name} au panier">
                     Ajouter au panier
                 </button>
             `;
@@ -338,8 +380,6 @@ const App = {
         const cartItems = document.getElementById('cart-items');
         const cartTotal = document.getElementById('cart-total');
         
-        if (!cartItems || !cartTotal) return;
-        
         cartItems.innerHTML = '';
         let total = 0;
 
@@ -349,15 +389,16 @@ const App = {
 
             const cartItem = document.createElement('div');
             cartItem.className = 'cart-item';
+            cartItem.setAttribute('role', 'listitem');
             cartItem.innerHTML = `
                 <div class="cart-item-info">
                     <h3>${item.name}</h3>
                     <div class="cart-item-price">${item.price} HTG x ${item.quantity}</div>
                 </div>
                 <div class="cart-item-actions">
-                    <button onclick="App.updateQuantity(${index}, -1)">-</button>
+                    <button onclick="App.updateQuantity(${index}, -1)" aria-label="Réduire la quantité">-</button>
                     <span>${item.quantity}</span>
-                    <button onclick="App.updateQuantity(${index}, 1)">+</button>
+                    <button onclick="App.updateQuantity(${index}, 1)" aria-label="Augmenter la quantité">+</button>
                     <button onclick="App.removeFromCart(${index})" class="btn-secondary">Supprimer</button>
                 </div>
             `;
@@ -367,10 +408,8 @@ const App = {
         cartTotal.textContent = `Total: ${total} HTG`;
 
         // Mettre à jour les montants dans les formulaires de paiement
-        const moncashAmount = document.getElementById('moncash-amount');
-        const natcashAmount = document.getElementById('natcash-amount');
-        if (moncashAmount) moncashAmount.value = total;
-        if (natcashAmount) natcashAmount.value = total;
+        document.getElementById('moncash-amount').value = total;
+        document.getElementById('natcash-amount').value = total;
     },
 
     updateQuantity(index, change) {
@@ -404,10 +443,7 @@ const App = {
             return;
         }
 
-        const paymentSection = document.getElementById('payment-section');
-        if (paymentSection) {
-            paymentSection.style.display = 'block';
-        }
+        document.getElementById('payment-section').style.display = 'block';
     },
 
     // Gestion des paiements
@@ -421,11 +457,8 @@ const App = {
         });
 
         // Activer la méthode sélectionnée
-        const methodElement = document.getElementById(`${method}-method`);
-        const formElement = document.getElementById(`${method}-form`);
-        
-        if (methodElement) methodElement.classList.add('active');
-        if (formElement) formElement.style.display = 'block';
+        document.getElementById(`${method}-method`).classList.add('active');
+        document.getElementById(`${method}-form`).style.display = 'block';
     },
 
     handleMonCashPayment(e) {
@@ -451,6 +484,9 @@ const App = {
             this.showNotification('Veuillez uploader une preuve de paiement', 'error');
             return;
         }
+
+        // Désactiver le bouton pendant le traitement
+        this.setButtonLoading(`${method}-submit`, true);
 
         // Convertir l'image en base64 pour le stockage
         const reader = new FileReader();
@@ -480,11 +516,12 @@ const App = {
             this.clearCart();
             
             // Cacher la section paiement
-            const paymentSection = document.getElementById('payment-section');
-            if (paymentSection) paymentSection.style.display = 'none';
+            document.getElementById('payment-section').style.display = 'none';
             
             this.showNotification('Commande passée avec succès! Nous traiterons votre demande rapidement.', 'success');
             this.showPage('accueil');
+            
+            this.setButtonLoading(`${method}-submit`, false);
         };
         reader.readAsDataURL(screenshotFile);
     },
@@ -495,19 +532,13 @@ const App = {
         const pendingOrders = this.orders.filter(order => order.status === 'pending').length;
         const totalRevenue = this.orders.reduce((sum, order) => sum + order.total, 0);
 
-        const totalOrdersEl = document.getElementById('total-orders');
-        const pendingOrdersEl = document.getElementById('pending-orders');
-        const totalRevenueEl = document.getElementById('total-revenue');
-        
-        if (totalOrdersEl) totalOrdersEl.textContent = totalOrders;
-        if (pendingOrdersEl) pendingOrdersEl.textContent = pendingOrders;
-        if (totalRevenueEl) totalRevenueEl.textContent = `${totalRevenue} HTG`;
+        document.getElementById('total-orders').textContent = totalOrders;
+        document.getElementById('pending-orders').textContent = pendingOrders;
+        document.getElementById('total-revenue').textContent = `${totalRevenue} HTG`;
     },
 
     displayOrders() {
         const tbody = document.getElementById('orders-table-body');
-        if (!tbody) return;
-        
         tbody.innerHTML = '';
 
         this.orders.forEach(order => {
@@ -630,13 +661,13 @@ const App = {
     },
 
     deleteOrder(orderId) {
-        if (confirm('Êtes-vous sûr de vouloir supprimer cette commande?')) {
+        this.showConfirmationModal('Êtes-vous sûr de vouloir supprimer cette commande?', () => {
             this.orders = this.orders.filter(o => o.id !== orderId);
             localStorage.setItem('orders', JSON.stringify(this.orders));
             this.updateAdminStats();
             this.displayOrders();
             this.showNotification('Commande supprimée', 'success');
-        }
+        });
     },
 
     exportOrders() {
@@ -653,50 +684,178 @@ const App = {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        
+        this.showNotification('Export des commandes réussi', 'success');
     },
 
     clearAllOrders() {
-        if (confirm('Êtes-vous sûr de vouloir supprimer toutes les commandes? Cette action est irréversible.')) {
+        this.showConfirmationModal('Êtes-vous sûr de vouloir supprimer toutes les commandes? Cette action est irréversible.', () => {
             this.orders = [];
             localStorage.setItem('orders', JSON.stringify(this.orders));
             this.updateAdminStats();
             this.displayOrders();
             this.showNotification('Toutes les commandes ont été supprimées', 'success');
-        }
+        });
     },
 
     // Profil utilisateur
     updateProfileDisplay() {
-        const profileName = document.getElementById('profile-name');
-        const profileEmail = document.getElementById('profile-email');
-        const profilePhone = document.getElementById('profile-phone');
-        const profileDate = document.getElementById('profile-date');
-        
-        if (profileName) profileName.textContent = this.currentUser.name;
-        if (profileEmail) profileEmail.textContent = this.currentUser.email;
-        if (profilePhone) profilePhone.textContent = this.currentUser.phone;
-        if (profileDate) profileDate.textContent = this.currentUser.registrationDate;
+        document.getElementById('profile-name').textContent = this.currentUser.name;
+        document.getElementById('profile-email').textContent = this.currentUser.email;
+        document.getElementById('profile-phone').textContent = this.currentUser.phone;
+        document.getElementById('profile-date').textContent = this.currentUser.registrationDate;
 
         // Afficher l'historique des commandes
         const userOrders = this.orders.filter(order => order.userId === this.currentUser.id);
         const orderHistory = document.getElementById('order-history');
         
-        if (orderHistory) {
-            if (userOrders.length === 0) {
-                orderHistory.innerHTML = '<p style="text-align: center; margin-top: 20px;">Aucune commande passée pour le moment.</p>';
-            } else {
-                orderHistory.innerHTML = userOrders.map(order => `
-                    <div class="cart-item">
-                        <div class="cart-item-info">
-                            <h3>Commande #${order.id}</h3>
-                            <p>Date: ${order.date}</p>
-                            <p>Total: ${order.total} HTG</p>
-                            <p>Statut: ${this.getStatusText(order.status)}</p>
-                        </div>
+        if (userOrders.length === 0) {
+            orderHistory.innerHTML = '<p style="text-align: center; margin-top: 20px;">Aucune commande passée pour le moment.</p>';
+        } else {
+            orderHistory.innerHTML = userOrders.map(order => `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <h3>Commande #${order.id}</h3>
+                        <p>Date: ${order.date}</p>
+                        <p>Total: ${order.total} HTG</p>
+                        <p>Statut: ${this.getStatusText(order.status)}</p>
                     </div>
-                `).join('');
+                </div>
+            `).join('');
+        }
+    },
+
+    // Utilitaires
+    validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    },
+
+    validatePhone(phone) {
+        const re = /^\+?[\d\s-()]{10,}$/;
+        return re.test(phone);
+    },
+
+    showError(fieldId, message) {
+        const errorElement = document.getElementById(fieldId + '-error');
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+        }
+    },
+
+    hideError(fieldId) {
+        const errorElement = document.getElementById(fieldId + '-error');
+        if (errorElement) {
+            errorElement.classList.remove('show');
+        }
+    },
+
+    setButtonLoading(buttonId, isLoading) {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            if (isLoading) {
+                button.disabled = true;
+                button.classList.add('loading');
+            } else {
+                button.disabled = false;
+                button.classList.remove('loading');
             }
         }
+    },
+
+    updatePasswordStrength() {
+        const password = document.getElementById('register-password').value;
+        const strengthBar = document.querySelector('.strength-bar');
+        const strengthText = document.querySelector('.strength-text');
+
+        let strength = 0;
+        if (password.length >= 8) strength++;
+        if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+        if (password.match(/\d/)) strength++;
+        if (password.match(/[^a-zA-Z\d]/)) strength++;
+
+        const strengthValue = Math.min(strength * 25, 100);
+        strengthBar.className = 'strength-bar';
+        strengthBar.setAttribute('aria-valuenow', strengthValue);
+        
+        if (password.length === 0) {
+            strengthText.textContent = 'Force du mot de passe: Non évalué';
+            strengthBar.style.setProperty('--strength-width', '0%');
+        } else if (strength <= 2) {
+            strengthBar.classList.add('weak');
+            strengthText.textContent = 'Force du mot de passe: Faible';
+            strengthBar.style.setProperty('--strength-width', '33%');
+        } else if (strength === 3) {
+            strengthBar.classList.add('medium');
+            strengthText.textContent = 'Force du mot de passe: Moyenne';
+            strengthBar.style.setProperty('--strength-width', '66%');
+        } else {
+            strengthBar.classList.add('strong');
+            strengthText.textContent = 'Force du mot de passe: Forte';
+            strengthBar.style.setProperty('--strength-width', '100%');
+        }
+    },
+
+    handleFileUpload(e) {
+        const file = e.target.files[0];
+        const fileInfo = document.getElementById(e.target.id + '-info');
+        
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                this.showNotification('Le fichier est trop volumineux (max 5MB)', 'error');
+                e.target.value = '';
+                fileInfo.textContent = '';
+            } else {
+                fileInfo.textContent = `Fichier sélectionné: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            }
+        }
+    },
+
+    handleContactForm(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('contact-name').value;
+        const email = document.getElementById('contact-email').value;
+        const message = document.getElementById('contact-message').value;
+
+        this.setButtonLoading('contact-form button', true);
+
+        // Simuler l'envoi du message
+        setTimeout(() => {
+            this.showNotification('Votre message a été envoyé! Nous vous répondrons dans les plus brefs délais.', 'success');
+            e.target.reset();
+            this.setButtonLoading('contact-form button', false);
+        }, 1000);
+    },
+
+    showConfirmationModal(message, confirmCallback) {
+        const modal = document.getElementById('confirmation-modal');
+        const messageEl = document.getElementById('modal-message');
+        const confirmBtn = document.getElementById('modal-confirm-btn');
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+
+        messageEl.textContent = message;
+        modal.style.display = 'flex';
+
+        // Nettoyer les écouteurs précédents
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+        // Nouveaux écouteurs
+        newConfirmBtn.addEventListener('click', () => {
+            confirmCallback();
+            this.hideConfirmationModal();
+        });
+
+        newCancelBtn.addEventListener('click', () => this.hideConfirmationModal());
+    },
+
+    hideConfirmationModal() {
+        document.getElementById('confirmation-modal').style.display = 'none';
     },
 
     getStatusText(status) {
@@ -709,79 +868,21 @@ const App = {
         return statusMap[status] || status;
     },
 
-    // Utilitaires
-    updatePasswordStrength() {
-        const password = document.getElementById('register-password').value;
-        const strengthBar = document.querySelector('.strength-bar');
-        const strengthText = document.querySelector('.strength-text');
-
-        let strength = 0;
-        if (password.length >= 6) strength++;
-        if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
-        if (password.match(/\d/)) strength++;
-        if (password.match(/[^a-zA-Z\d]/)) strength++;
-
-        strengthBar.className = 'strength-bar';
-        if (strength === 0) {
-            strengthText.textContent = 'Force du mot de passe: Faible';
-        } else if (strength <= 2) {
-            strengthBar.classList.add('weak');
-            strengthText.textContent = 'Force du mot de passe: Faible';
-        } else if (strength === 3) {
-            strengthBar.classList.add('medium');
-            strengthText.textContent = 'Force du mot de passe: Moyenne';
-        } else {
-            strengthBar.classList.add('strong');
-            strengthText.textContent = 'Force du mot de passe: Forte';
-        }
-    },
-
-    handleFileUpload(e) {
-        const file = e.target.files[0];
-        const fileInfo = document.getElementById(e.target.id + '-info');
-        
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                this.showNotification('Le fichier est trop volumineux (max 5MB)', 'error');
-                e.target.value = '';
-                if (fileInfo) fileInfo.textContent = '';
-            } else {
-                if (fileInfo) fileInfo.textContent = `Fichier sélectionné: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
-            }
-        }
-    },
-
-    handleContactForm(e) {
-        e.preventDefault();
-        
-        const name = document.getElementById('contact-name').value;
-        const email = document.getElementById('contact-email').value;
-        const message = document.getElementById('contact-message').value;
-
-        this.showNotification('Votre message a été envoyé! Nous vous répondrons dans les plus brefs délais.', 'success');
-        e.target.reset();
-    },
-
     showNotification(message, type = 'success') {
         const notification = document.getElementById('notification');
         const messageEl = document.getElementById('notification-message');
         
-        if (notification && messageEl) {
-            messageEl.textContent = message;
-            notification.className = `notification ${type}`;
-            notification.style.display = 'flex';
-            
-            setTimeout(() => {
-                this.hideNotification();
-            }, 5000);
-        }
+        messageEl.textContent = message;
+        notification.className = `notification ${type}`;
+        notification.style.display = 'flex';
+        
+        setTimeout(() => {
+            this.hideNotification();
+        }, 5000);
     },
 
     hideNotification() {
-        const notification = document.getElementById('notification');
-        if (notification) {
-            notification.style.display = 'none';
-        }
+        document.getElementById('notification').style.display = 'none';
     }
 };
 
@@ -790,16 +891,6 @@ document.addEventListener('DOMContentLoaded', () => {
     App.init();
 });
 
-// Exposer les méthodes globales pour l'HTML - CORRIGÉ
-window.addToCart = (productId) => App.addToCart(productId);
-window.updateQuantity = (index, change) => App.updateQuantity(index, change);
-window.removeFromCart = (index) => App.removeFromCart(index);
-window.clearCart = () => App.clearCart();
-window.checkout = () => App.checkout();
-window.selectPaymentMethod = (method) => App.selectPaymentMethod(method);
-window.exportOrders = () => App.exportOrders();
-window.clearAllOrders = () => App.clearAllOrders();
+// Exposer les méthodes globales pour l'HTML
+window.App = App;
 window.hideNotification = () => App.hideNotification();
-window.updateOrderStatus = (orderId, newStatus) => App.updateOrderStatus(orderId, newStatus);
-window.deleteOrder = (orderId) => App.deleteOrder(orderId);
-window.showOrderDetails = (orderId) => App.showOrderDetails(orderId);
