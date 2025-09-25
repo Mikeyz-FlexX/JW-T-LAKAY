@@ -8,12 +8,11 @@ let users = JSON.parse(localStorage.getItem('users')) || [];
 
 // Produits disponibles
 const products = [
-    { id: 1, name: "100 Diamants", price: 100, icon: "💎", description: "Pack de démarrage" },
-    { id: 2, name: "310 Diamants", price: 300, icon: "💎", description: "Pack standard" },
-    { id: 3, name: "520 Diamants", price: 500, icon: "💎", description: "Pack valeur" },
-    { id: 4, name: "1060 Diamants", price: 1000, icon: "💎", description: "Pack premium" },
-    { id: 5, name: "2180 Diamants", price: 2000, icon: "💎", description: "Pack deluxe" },
-    { id: 6, name: "5600 Diamants", price: 5000, icon: "💎", description: "Pack ultimate" }
+    { id: 1, name: "110 Diamants", price: 165, icon: "💎", description: "Pack de démarrage" },
+    { id: 2, name: "220 Diamants", price: 330, icon: "💎", description: "Pack standard" },
+    { id: 3, name: "572 Diamants", price: 825, icon: "💎", description: "Pack valeur" },
+    { id: 4, name: "1160 Diamants", price: 1650, icon: "💎", description: "Pack premium" },
+    { id: 5, name: "2398 Diamants", price: 3300, icon: "💎", description: "Pack deluxe" },
 ];
 
 // Initialisation de l'application
