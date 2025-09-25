@@ -1,47 +1,74 @@
+// main.js - Logique de l'application Jwèt Lakay
+
 // Variables globales
 let currentUser = null;
 let cart = [];
-let orders = [];
+let orders = JSON.parse(localStorage.getItem('orders')) || [];
 let users = JSON.parse(localStorage.getItem('users')) || [];
-let adminCredentials = {
-    email: 'handylopez1996@gmail.com',
-    password: 'Handy123'
-};
+
+// Produits disponibles
+const products = [
+    { id: 1, name: "100 Diamants", price: 100, icon: "💎", description: "Pack de démarrage" },
+    { id: 2, name: "310 Diamants", price: 300, icon: "💎💎", description: "Pack standard" },
+    { id: 3, name: "520 Diamants", price: 500, icon: "💎💎💎", description: "Pack valeur" },
+    { id: 4, name: "1060 Diamants", price: 1000, icon: "💎💎💎💎", description: "Pack premium" },
+    { id: 5, name: "2180 Diamants", price: 2000, icon: "💎💎💎💎💎", description: "Pack deluxe" },
+    { id: 6, name: "5600 Diamants", price: 5000, icon: "💎💎💎💎💎💎", description: "Pack ultimate" }
+];
 
 // Initialisation de l'application
 document.addEventListener('DOMContentLoaded', function() {
-    // Vérifier si l'utilisateur est déjà connecté
+    initializeApp();
+});
+
+function initializeApp() {
+    // Vérifier si un utilisateur est déjà connecté
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
-        showPage('accueil');
-        updateNavigation();
-        loadCart();
-    } else {
-        showPage('connexion');
+        updateUIForUser();
     }
 
-    // Gestionnaire pour le menu hamburger
+    // Charger le panier depuis le localStorage
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+        cart = JSON.parse(savedCart);
+        updateCartDisplay();
+    }
+
+    // Initialiser les écouteurs d'événements
+    setupEventListeners();
+    
+    // Afficher les produits
+    displayProducts();
+    
+    // Mettre à jour les statistiques admin
+    updateAdminStats();
+}
+
+function setupEventListeners() {
+    // Navigation
+    document.querySelectorAll('nav a[data-page]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const page = this.getAttribute('data-page');
+            showPage(page);
+        });
+    });
+
+    // Menu mobile
     document.querySelector('.menu-toggle').addEventListener('click', function() {
         document.querySelector('nav ul').classList.toggle('show');
     });
 
-    // Gestionnaires pour les liens de navigation
-    document.querySelectorAll('nav a').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            if (this.id === 'logout-btn') {
-                logout();
-            } else {
-                const page = this.getAttribute('data-page');
-                showPage(page);
-            }
-            // Fermer le menu mobile après clic
-            document.querySelector('nav ul').classList.remove('show');
-        });
-    });
+    // Formulaire de connexion
+    document.getElementById('login-form').addEventListener('submit', handleLogin);
 
-    // Gestionnaires pour les formulaires d'authentification
+    // Formulaire d'inscription
+    document.getElementById('register-form').addEventListener('submit', handleRegister);
+    document.getElementById('register-password').addEventListener('input', updatePasswordStrength);
+
+    // Navigation entre connexion/inscription
     document.getElementById('show-register').addEventListener('click', function(e) {
         e.preventDefault();
         showPage('inscription');
@@ -52,29 +79,10 @@ document.addEventListener('DOMContentLoaded', function() {
         showPage('connexion');
     });
 
-    document.getElementById('login-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        login();
-    });
+    // Déconnexion
+    document.getElementById('logout-btn').addEventListener('click', handleLogout);
 
-    document.getElementById('register-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        register();
-    });
-
-    // Gestionnaire pour les boutons "Ajouter au panier"
-    document.querySelectorAll('.add-to-cart').forEach(button => {
-        button.addEventListener('click', function() {
-            const productCard = this.closest('.product-card');
-            const product = productCard.getAttribute('data-product');
-            const price = parseInt(productCard.getAttribute('data-price'));
-            const title = productCard.querySelector('.product-title').textContent;
-            
-            addToCart(product, title, price);
-        });
-    });
-
-    // Gestionnaires pour les méthodes de paiement
+    // Méthodes de paiement
     document.getElementById('moncash-method').addEventListener('click', function() {
         selectPaymentMethod('moncash');
     });
@@ -83,344 +91,535 @@ document.addEventListener('DOMContentLoaded', function() {
         selectPaymentMethod('natcash');
     });
 
-    // Gestionnaires pour les formulaires de paiement
-    document.getElementById('moncash-payment-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        processPayment('moncash');
-    });
+    // Formulaires de paiement
+    document.getElementById('moncash-payment-form').addEventListener('submit', handleMonCashPayment);
+    document.getElementById('natcash-payment-form').addEventListener('submit', handleNatCashPayment);
 
-    document.getElementById('natcash-payment-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        processPayment('natcash');
-    });
-});
+    // Gestion des uploads de fichiers
+    document.getElementById('moncash-screenshot').addEventListener('change', handleFileUpload);
+    document.getElementById('natcash-screenshot').addEventListener('change', handleFileUpload);
 
-// Fonctions de navigation
-function showPage(pageId) {
+    // Formulaire de contact
+    document.getElementById('contact-form').addEventListener('submit', handleContactForm);
+}
+
+// Gestion de l'affichage des pages
+function showPage(pageName) {
     // Masquer toutes les pages
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
     });
-    
+
     // Afficher la page demandée
-    document.getElementById(pageId).classList.add('active');
+    const targetPage = document.getElementById(pageName);
+    if (targetPage) {
+        targetPage.classList.add('active');
+        
+        // Mettre à jour l'interface selon la page
+        switch(pageName) {
+            case 'panier':
+                updateCartDisplay();
+                break;
+            case 'admin':
+                if (currentUser && currentUser.isAdmin) {
+                    updateAdminStats();
+                    displayOrders();
+                } else {
+                    showNotification('Accès non autorisé', 'error');
+                    showPage('accueil');
+                }
+                break;
+            case 'profil':
+                if (currentUser) {
+                    updateProfileDisplay();
+                } else {
+                    showNotification('Veuillez vous connecter', 'error');
+                    showPage('connexion');
+                }
+                break;
+        }
+    }
+}
+
+// Gestion de l'authentification
+function handleLogin(e) {
+    e.preventDefault();
     
-    // Mettre à jour la navigation si nécessaire
-    if (pageId === 'panier') {
-        updateCartDisplay();
-    } else if (pageId === 'profil') {
-        updateProfileDisplay();
-    } else if (pageId === 'admin') {
-        updateAdminDisplay();
-    }
-}
-
-function updateNavigation() {
-    // Afficher/masquer le lien admin selon l'utilisateur
-    const adminLink = document.querySelector('.admin-link');
-    if (currentUser && currentUser.email === adminCredentials.email) {
-        adminLink.style.display = 'block';
-    } else {
-        adminLink.style.display = 'none';
-    }
-}
-
-// Fonctions d'authentification
-function login() {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
-    
-    // Vérification des identifiants admin
-    if (email === adminCredentials.email && password === adminCredentials.password) {
-        currentUser = {
-            email: email,
-            name: 'Administrateur',
-            phone: '',
-            registrationDate: new Date().toLocaleDateString()
-        };
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        showPage('accueil');
-        updateNavigation();
-        alert('Connexion réussie en tant qu\'administrateur!');
-        return;
-    }
-    
-    // Vérification des utilisateurs normaux
+
+    // Vérifier les informations de connexion
     const user = users.find(u => u.email === email && u.password === password);
+    
     if (user) {
         currentUser = user;
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        updateUIForUser();
+        showNotification('Connexion réussie!', 'success');
         showPage('accueil');
-        updateNavigation();
-        loadCart();
-        alert('Connexion réussie!');
     } else {
-        alert('Email ou mot de passe incorrect.');
+        showNotification('Email ou mot de passe incorrect', 'error');
     }
 }
 
-function register() {
+function handleRegister(e) {
+    e.preventDefault();
+    
     const email = document.getElementById('register-email').value;
     const name = document.getElementById('register-name').value;
     const phone = document.getElementById('register-phone').value;
     const password = document.getElementById('register-password').value;
-    const confirm = document.getElementById('register-confirm').value;
-    
-    if (password !== confirm) {
-        alert('Les mots de passe ne correspondent pas.');
+    const confirmPassword = document.getElementById('register-confirm').value;
+
+    // Vérifications
+    if (password !== confirmPassword) {
+        showNotification('Les mots de passe ne correspondent pas', 'error');
         return;
     }
-    
-    // Vérifier si l'utilisateur existe déjà
+
     if (users.find(u => u.email === email)) {
-        alert('Un compte avec cet email existe déjà.');
+        showNotification('Cet email est déjà utilisé', 'error');
         return;
     }
-    
-    // Créer un nouvel utilisateur
+
+    // Créer le nouvel utilisateur
     const newUser = {
-        email: email,
-        name: name,
-        phone: phone,
-        password: password,
-        registrationDate: new Date().toLocaleDateString()
+        id: Date.now(),
+        email,
+        name,
+        phone,
+        password,
+        registrationDate: new Date().toLocaleDateString('fr-FR'),
+        isAdmin: email === 'admin@jwètlakay.com' // Premier admin
     };
-    
+
     users.push(newUser);
     localStorage.setItem('users', JSON.stringify(users));
     
-    currentUser = newUser;
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    
-    showPage('accueil');
-    updateNavigation();
-    alert('Inscription réussie! Bienvenue sur Jwèt Lakay.');
+    showNotification('Inscription réussie! Vous pouvez maintenant vous connecter.', 'success');
+    showPage('connexion');
 }
 
-function logout() {
+function handleLogout() {
     currentUser = null;
     localStorage.removeItem('currentUser');
-    cart = [];
-    if (currentUser) {
-        localStorage.removeItem('cart_' + currentUser.email);
-    }
+    updateUIForUser();
+    showNotification('Déconnexion réussie', 'success');
     showPage('connexion');
-    alert('Vous avez été déconnecté.');
 }
 
-// Fonctions du panier
-function addToCart(product, title, price) {
+function updateUIForUser() {
+    const adminLink = document.querySelector('.admin-link');
+    const logoutBtn = document.getElementById('logout-btn');
+    const navLinks = document.querySelectorAll('nav a[data-page]');
+
+    if (currentUser) {
+        // Masquer la connexion, afficher les autres pages
+        showPage('accueil');
+        if (currentUser.isAdmin) {
+            adminLink.style.display = 'block';
+        } else {
+            adminLink.style.display = 'none';
+        }
+        logoutBtn.style.display = 'block';
+    } else {
+        // Afficher la page de connexion
+        showPage('connexion');
+        adminLink.style.display = 'none';
+        logoutBtn.style.display = 'none';
+    }
+}
+
+// Gestion des produits
+function displayProducts() {
+    const grid = document.getElementById('products-grid');
+    grid.innerHTML = '';
+
+    products.forEach(product => {
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card';
+        productCard.innerHTML = `
+            <div class="product-badge">Populaire</div>
+            <div class="product-icon">${product.icon}</div>
+            <h3 class="product-title">${product.name}</h3>
+            <p class="product-description">${product.description}</p>
+            <div class="product-price">${product.price} HTG</div>
+            <button class="add-to-cart" onclick="addToCart(${product.id})">
+                Ajouter au panier
+            </button>
+        `;
+        grid.appendChild(productCard);
+    });
+}
+
+// Gestion du panier
+function addToCart(productId) {
     if (!currentUser) {
-        alert('Veuillez vous connecter pour ajouter des articles au panier.');
+        showNotification('Veuillez vous connecter pour ajouter au panier', 'error');
         showPage('connexion');
         return;
     }
-    
-    const existingItem = cart.find(item => item.product === product);
-    
+
+    const product = products.find(p => p.id === productId);
+    const existingItem = cart.find(item => item.productId === productId);
+
     if (existingItem) {
         existingItem.quantity += 1;
     } else {
         cart.push({
-            product: product,
-            title: title,
-            price: price,
+            productId: productId,
+            name: product.name,
+            price: product.price,
             quantity: 1
         });
     }
-    
-    saveCart();
-    alert('Produit ajouté au panier!');
+
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartDisplay();
+    showNotification(`${product.name} ajouté au panier`, 'success');
 }
 
 function updateCartDisplay() {
-    const cartItemsContainer = document.getElementById('cart-items');
-    const cartTotalElement = document.getElementById('cart-total');
+    const cartItems = document.getElementById('cart-items');
+    const cartTotal = document.getElementById('cart-total');
     
-    cartItemsContainer.innerHTML = '';
-    
-    if (cart.length === 0) {
-        cartItemsContainer.innerHTML = '<p style="text-align: center;">Votre panier est vide.</p>';
-        cartTotalElement.textContent = 'Total: 0 HTG';
-        return;
-    }
-    
+    cartItems.innerHTML = '';
     let total = 0;
-    
+
     cart.forEach((item, index) => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
-        
-        const cartItemElement = document.createElement('div');
-        cartItemElement.className = 'cart-item';
-        cartItemElement.innerHTML = `
+
+        const cartItem = document.createElement('div');
+        cartItem.className = 'cart-item';
+        cartItem.innerHTML = `
             <div class="cart-item-info">
-                <h3>${item.title}</h3>
-                <p class="cart-item-price">${item.price} HTG x ${item.quantity}</p>
+                <h3>${item.name}</h3>
+                <div class="cart-item-price">${item.price} HTG x ${item.quantity}</div>
             </div>
-            <div>
-                <button class="remove-from-cart" data-index="${index}">❌</button>
+            <div class="cart-item-actions">
+                <button onclick="updateQuantity(${index}, -1)">-</button>
+                <span>${item.quantity}</span>
+                <button onclick="updateQuantity(${index}, 1)">+</button>
+                <button onclick="removeFromCart(${index})" class="btn-secondary">Supprimer</button>
             </div>
         `;
-        
-        cartItemsContainer.appendChild(cartItemElement);
+        cartItems.appendChild(cartItem);
     });
-    
-    cartTotalElement.textContent = `Total: ${total} HTG`;
-    
+
+    cartTotal.textContent = `Total: ${total} HTG`;
+
     // Mettre à jour les montants dans les formulaires de paiement
     document.getElementById('moncash-amount').value = total;
     document.getElementById('natcash-amount').value = total;
+}
+
+function updateQuantity(index, change) {
+    cart[index].quantity += change;
     
-    // Ajouter les gestionnaires d'événements pour les boutons de suppression
-    document.querySelectorAll('.remove-from-cart').forEach(button => {
-        button.addEventListener('click', function() {
-            const index = parseInt(this.getAttribute('data-index'));
-            removeFromCart(index);
-        });
-    });
+    if (cart[index].quantity <= 0) {
+        cart.splice(index, 1);
+    }
+    
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartDisplay();
 }
 
 function removeFromCart(index) {
     cart.splice(index, 1);
-    saveCart();
+    localStorage.setItem('cart', JSON.stringify(cart));
     updateCartDisplay();
+    showNotification('Article retiré du panier', 'success');
 }
 
-function saveCart() {
-    if (currentUser) {
-        localStorage.setItem('cart_' + currentUser.email, JSON.stringify(cart));
+function clearCart() {
+    cart = [];
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartDisplay();
+    showNotification('Panier vidé', 'success');
+}
+
+function checkout() {
+    if (cart.length === 0) {
+        showNotification('Votre panier est vide', 'error');
+        return;
     }
+
+    document.getElementById('payment-section').style.display = 'block';
 }
 
-function loadCart() {
-    if (currentUser) {
-        const savedCart = localStorage.getItem('cart_' + currentUser.email);
-        if (savedCart) {
-            cart = JSON.parse(savedCart);
-        }
-    }
-}
-
-// Fonctions de paiement
+// Gestion des paiements
 function selectPaymentMethod(method) {
     // Réinitialiser la sélection
-    document.querySelectorAll('.payment-method').forEach(el => {
-        el.classList.remove('active');
+    document.querySelectorAll('.payment-method').forEach(pm => {
+        pm.classList.remove('active');
     });
-    
-    // Masquer tous les formulaires
-    document.getElementById('moncash-form').style.display = 'none';
-    document.getElementById('natcash-form').style.display = 'none';
-    
+    document.querySelectorAll('.payment-form').forEach(pf => {
+        pf.style.display = 'none';
+    });
+
     // Activer la méthode sélectionnée
-    if (method === 'moncash') {
-        document.getElementById('moncash-method').classList.add('active');
-        document.getElementById('moncash-form').style.display = 'block';
-    } else if (method === 'natcash') {
-        document.getElementById('natcash-method').classList.add('active');
-        document.getElementById('natcash-form').style.display = 'block';
-    }
+    document.getElementById(`${method}-method`).classList.add('active');
+    document.getElementById(`${method}-form`).style.display = 'block';
+}
+
+function handleMonCashPayment(e) {
+    e.preventDefault();
+    processPayment('moncash');
+}
+
+function handleNatCashPayment(e) {
+    e.preventDefault();
+    processPayment('natcash');
 }
 
 function processPayment(method) {
-    if (cart.length === 0) {
-        alert('Votre panier est vide.');
-        return;
-    }
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    let orderData = {
+    const order = {
         id: Date.now(),
-        user: currentUser.email,
+        userId: currentUser.id,
+        userName: currentUser.name,
         items: [...cart],
-        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        method: method,
-        date: new Date().toLocaleString(),
-        status: 'En attente'
+        total: total,
+        paymentMethod: method,
+        status: 'pending',
+        date: new Date().toLocaleString('fr-FR'),
+        freeFireId: document.getElementById(method === 'moncash' ? 'freefire-id' : 'freefire-id-natcash').value
     };
-    
-    // Récupérer les données du formulaire
-    if (method === 'moncash') {
-        orderData.payerName = document.getElementById('moncash-name').value;
-        orderData.payerNumber = document.getElementById('moncash-number').value;
-        orderData.freefireId = document.getElementById('freefire-id').value;
-    } else if (method === 'natcash') {
-        orderData.payerName = document.getElementById('natcash-name').value;
-        orderData.payerNumber = document.getElementById('natcash-number').value;
-        orderData.freefireId = document.getElementById('freefire-id-natcash').value;
-    }
-    
-    // Sauvegarder la commande
-    orders = JSON.parse(localStorage.getItem('orders')) || [];
-    orders.push(orderData);
+
+    orders.push(order);
     localStorage.setItem('orders', JSON.stringify(orders));
     
     // Vider le panier
-    cart = [];
-    saveCart();
+    clearCart();
     
-    alert('Votre commande a été passée avec succès! Nous traiterons votre paiement rapidement.');
+    // Cacher la section paiement
+    document.getElementById('payment-section').style.display = 'none';
+    
+    showNotification('Commande passée avec succès! Nous traiterons votre demande rapidement.', 'success');
     showPage('accueil');
 }
 
-// Fonctions d'affichage des pages
+// Gestion de l'administration
+function updateAdminStats() {
+    const totalOrders = orders.length;
+    const pendingOrders = orders.filter(order => order.status === 'pending').length;
+    const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+
+    document.getElementById('total-orders').textContent = totalOrders;
+    document.getElementById('pending-orders').textContent = pendingOrders;
+    document.getElementById('total-revenue').textContent = `${totalRevenue} HTG`;
+}
+
+function displayOrders() {
+    const tbody = document.getElementById('orders-table-body');
+    tbody.innerHTML = '';
+
+    orders.filter(order => order.status === 'pending').forEach(order => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>#${order.id}</td>
+            <td>${order.userName}</td>
+            <td>${order.items.map(item => `${item.name} (x${item.quantity})`).join(', ')}</td>
+            <td>${order.total} HTG</td>
+            <td>${order.paymentMethod}</td>
+            <td>${order.date}</td>
+            <td>
+                <select onchange="updateOrderStatus(${order.id}, this.value)">
+                    <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>En attente</option>
+                    <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>En traitement</option>
+                    <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Terminé</option>
+                    <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Annulé</option>
+                </select>
+            </td>
+            <td>
+                <button onclick="deleteOrder(${order.id})" class="btn-secondary">Supprimer</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateOrderStatus(orderId, newStatus) {
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+        order.status = newStatus;
+        localStorage.setItem('orders', JSON.stringify(orders));
+        updateAdminStats();
+        displayOrders();
+        showNotification('Statut de commande mis à jour', 'success');
+    }
+}
+
+function deleteOrder(orderId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette commande?')) {
+        orders = orders.filter(o => o.id !== orderId);
+        localStorage.setItem('orders', JSON.stringify(orders));
+        updateAdminStats();
+        displayOrders();
+        showNotification('Commande supprimée', 'success');
+    }
+}
+
+function exportOrders() {
+    const csvContent = "data:text/csv;charset=utf-8," 
+        + "ID,Client,Produits,Montant,Méthode,Date,Statut\n"
+        + orders.map(order => 
+            `"${order.id}","${order.userName}","${order.items.map(item => item.name).join(', ')}","${order.total}","${order.paymentMethod}","${order.date}","${order.status}"`
+        ).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "commandes_jwet_lakay.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function clearAllOrders() {
+    if (confirm('Êtes-vous sûr de vouloir supprimer toutes les commandes? Cette action est irréversible.')) {
+        orders = [];
+        localStorage.setItem('orders', JSON.stringify(orders));
+        updateAdminStats();
+        displayOrders();
+        showNotification('Toutes les commandes ont été supprimées', 'success');
+    }
+}
+
+// Profil utilisateur
 function updateProfileDisplay() {
-    if (currentUser) {
-        document.getElementById('profile-name').textContent = currentUser.name;
-        document.getElementById('profile-email').textContent = currentUser.email;
-        document.getElementById('profile-phone').textContent = currentUser.phone;
-        document.getElementById('profile-date').textContent = currentUser.registrationDate;
-        
-        // Afficher l'historique des commandes
-        const orderHistory = document.getElementById('order-history');
-        const userOrders = (JSON.parse(localStorage.getItem('orders')) || [])
-            .filter(order => order.user === currentUser.email);
-        
-        if (userOrders.length === 0) {
-            orderHistory.innerHTML = '<p style="text-align: center; margin-top: 20px;">Aucune commande passée pour le moment.</p>';
+    document.getElementById('profile-name').textContent = currentUser.name;
+    document.getElementById('profile-email').textContent = currentUser.email;
+    document.getElementById('profile-phone').textContent = currentUser.phone;
+    document.getElementById('profile-date').textContent = currentUser.registrationDate;
+
+    // Afficher l'historique des commandes
+    const userOrders = orders.filter(order => order.userId === currentUser.id);
+    const orderHistory = document.getElementById('order-history');
+    
+    if (userOrders.length === 0) {
+        orderHistory.innerHTML = '<p style="text-align: center; margin-top: 20px;">Aucune commande passée pour le moment.</p>';
+    } else {
+        orderHistory.innerHTML = userOrders.map(order => `
+            <div class="cart-item">
+                <div class="cart-item-info">
+                    <h3>Commande #${order.id}</h3>
+                    <p>Date: ${order.date}</p>
+                    <p>Total: ${order.total} HTG</p>
+                    <p>Statut: ${getStatusText(order.status)}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+function getStatusText(status) {
+    const statusMap = {
+        'pending': 'En attente',
+        'processing': 'En traitement',
+        'completed': 'Terminé',
+        'cancelled': 'Annulé'
+    };
+    return statusMap[status] || status;
+}
+
+// Utilitaires
+function updatePasswordStrength() {
+    const password = document.getElementById('register-password').value;
+    const strengthBar = document.querySelector('.strength-bar');
+    const strengthText = document.querySelector('.strength-text');
+
+    let strength = 0;
+    if (password.length >= 6) strength++;
+    if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+    if (password.match(/\d/)) strength++;
+    if (password.match(/[^a-zA-Z\d]/)) strength++;
+
+    strengthBar.className = 'strength-bar';
+    if (strength === 0) {
+        strengthText.textContent = 'Force du mot de passe: Faible';
+    } else if (strength <= 2) {
+        strengthBar.classList.add('weak');
+        strengthText.textContent = 'Force du mot de passe: Faible';
+    } else if (strength === 3) {
+        strengthBar.classList.add('medium');
+        strengthText.textContent = 'Force du mot de passe: Moyenne';
+    } else {
+        strengthBar.classList.add('strong');
+        strengthText.textContent = 'Force du mot de passe: Forte';
+    }
+}
+
+function handleFileUpload(e) {
+    const file = e.target.files[0];
+    const fileInfo = document.getElementById(e.target.id + '-info');
+    
+    if (file) {
+        if (file.size > 5 * 1024 * 1024) { // 5MB max
+            showNotification('Le fichier est trop volumineux (max 5MB)', 'error');
+            e.target.value = '';
+            fileInfo.textContent = '';
         } else {
-            let html = '';
-            userOrders.forEach(order => {
-                html += `
-                    <div class="cart-item">
-                        <div class="cart-item-info">
-                            <h3>Commande #${order.id}</h3>
-                            <p>Date: ${order.date}</p>
-                            <p>Total: ${order.total} HTG</p>
-                            <p>Statut: ${order.status}</p>
-                        </div>
-                    </div>
-                `;
-            });
-            orderHistory.innerHTML = html;
+            fileInfo.textContent = `Fichier sélectionné: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
         }
     }
 }
 
-function updateAdminDisplay() {
-    if (currentUser && currentUser.email === adminCredentials.email) {
-        const ordersTableBody = document.getElementById('orders-table-body');
-        orders = JSON.parse(localStorage.getItem('orders')) || [];
-        
-        let html = '';
-        orders.forEach(order => {
-            const itemsText = order.items.map(item => `${item.title} (x${item.quantity})`).join(', ');
-            
-            html += `
-                <tr>
-                    <td>${order.id}</td>
-                    <td>${order.user}</td>
-                    <td>${itemsText}</td>
-                    <td>${order.total} HTG</td>
-                    <td>${order.method}</td>
-                    <td>${order.status}</td>
-                </tr>
-            `;
-        });
-        
-        ordersTableBody.innerHTML = html;
-    } else {
-        alert('Accès non autorisé.');
-        showPage('accueil');
-    }
+function handleContactForm(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('contact-name').value;
+    const email = document.getElementById('contact-email').value;
+    const message = document.getElementById('contact-message').value;
+
+    // Simuler l'envoi du message
+    showNotification('Votre message a été envoyé! Nous vous répondrons dans les plus brefs délais.', 'success');
+    e.target.reset();
+}
+
+function showNotification(message, type = 'success') {
+    const notification = document.getElementById('notification');
+    const messageEl = document.getElementById('notification-message');
+    
+    messageEl.textContent = message;
+    notification.className = `notification ${type}`;
+    notification.style.display = 'flex';
+    
+    setTimeout(() => {
+        hideNotification();
+    }, 5000);
+}
+
+function hideNotification() {
+    document.getElementById('notification').style.display = 'none';
+}
+
+// Fonctions globales accessibles depuis HTML
+window.addToCart = addToCart;
+window.updateQuantity = updateQuantity;
+window.removeFromCart = removeFromCart;
+window.clearCart = clearCart;
+window.checkout = checkout;
+window.selectPaymentMethod = selectPaymentMethod;
+window.exportOrders = exportOrders;
+window.clearAllOrders = clearAllOrders;
+window.hideNotification = hideNotification;
+window.updateOrderStatus = updateOrderStatus;
+window.deleteOrder = deleteOrder;
+
+// Créer un utilisateur admin par défaut au premier chargement
+if (users.length === 0) {
+    const adminUser = {
+        id: 1,
+        email: 'admin@jwètlakay.com',
+        name: 'Administrateur',
+        phone: '+50900000000',
+        password: 'admin123',
+        registrationDate: new Date().toLocaleDateString('fr-FR'),
+        isAdmin: true
+    };
+    users.push(adminUser);
+    localStorage.setItem('users', JSON.stringify(users));
 }
