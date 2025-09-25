@@ -2,11 +2,24 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Jwèt Lakay - Top Up Free Fire</title>
     <meta name="description" content="Top-up Free Fire en Haïti - Achetez des diamants Free Fire via MonCash et NatCash">
     <meta name="keywords" content="Free Fire, top-up, diamants, Haïti, MonCash, NatCash">
     <link rel="canonical" href="https://jwet-lakay.netlify.com">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ff9900">
+    
+    <!-- iOS Meta -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Jwèt Lakay">
+    
+    <!-- Préchargement CSS -->
+    <link rel="preload" href="style.css" as="style">
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -107,6 +120,7 @@
 
         <!-- Page d'accueil -->
         <div id="accueil" class="page" role="region" aria-label="Page d'accueil">
+            <!-- La bannière promo sera ajoutée dynamiquement ici -->
             <div class="welcome-section">
                 <h1 class="welcome-title">Bienvenue sur Jwèt Lakay</h1>
                 <p class="welcome-subtitle">Votre destination pour le top-up Free Fire en Haïti</p>
@@ -125,6 +139,12 @@
         <!-- Page Panier -->
         <div id="panier" class="page" role="region" aria-label="Page panier">
             <h1 class="form-title">Votre Panier</h1>
+            
+            <div class="loyalty-points" id="loyalty-points" style="display: none;">
+                <h3>🎯 Points de fidélité</h3>
+                <div class="points-display" id="points-display">0 points</div>
+                <p>Vous gagnerez <span id="points-to-earn">0</span> points avec cette commande</p>
+            </div>
             
             <div class="cart-items" id="cart-items" role="list" aria-label="Articles du panier">
                 <!-- Les articles du panier seront ajoutés ici dynamiquement -->
@@ -180,6 +200,7 @@
                         <div class="form-group">
                             <label for="freefire-id">ID du compte Free Fire</label>
                             <input type="text" id="freefire-id" required>
+                            <small>Vérification automatique en cours...</small>
                         </div>
                         <div class="form-group">
                             <label for="moncash-screenshot">Preuve de paiement (screenshot)</label>
@@ -211,6 +232,7 @@
                         <div class="form-group">
                             <label for="freefire-id-natcash">ID du compte Free Fire</label>
                             <input type="text" id="freefire-id-natcash" required>
+                            <small>Vérification automatique en cours...</small>
                         </div>
                         <div class="form-group">
                             <label for="natcash-screenshot">Preuve de paiement (screenshot)</label>
@@ -244,14 +266,35 @@
                         <h3>Chiffre d'affaires</h3>
                         <span id="total-revenue">0 HTG</span>
                     </div>
+                    <div class="stat-card">
+                        <h3>Aujourd'hui</h3>
+                        <span id="daily-revenue">0 HTG</span>
+                    </div>
+                </div>
+                
+                <!-- Analytics Avancées -->
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3>CA Hebdomadaire</h3>
+                        <div class="analytics-value" id="weekly-revenue">0 HTG</div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Clients actifs</h3>
+                        <div class="analytics-value" id="active-customers">0</div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Produit populaire</h3>
+                        <div class="analytics-value" id="popular-product">-</div>
+                    </div>
                 </div>
                 
                 <div class="admin-actions">
                     <button class="btn" onclick="App.exportOrders()">Exporter les commandes</button>
+                    <button class="btn" onclick="App.exportAnalytics()">Exporter les stats</button>
                     <button class="btn-secondary" onclick="App.showConfirmationModal('Êtes-vous sûr de vouloir supprimer toutes les commandes? Cette action est irréversible.', App.clearAllOrders)">Tout supprimer</button>
                 </div>
                 
-                <h2 style="margin-top: 30px; color: #ff9900;">Commandes en attente</h2>
+                <h2 style="margin-top: 30px; color: #ff9900;">Commandes récentes</h2>
                 <div class="table-container">
                     <table class="orders-table" role="grid" aria-label="Liste des commandes">
                         <thead>
@@ -270,6 +313,12 @@
                             <!-- Les commandes seront ajoutées ici dynamiquement -->
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Section Tickets Support -->
+                <h2 style="margin-top: 40px; color: #ff9900;">Tickets Support</h2>
+                <div id="tickets-container">
+                    <!-- Les tickets seront affichés ici -->
                 </div>
             </div>
         </div>
@@ -294,11 +343,41 @@
                     <div class="profile-label">Date d'inscription</div>
                     <div id="profile-date">-</div>
                 </div>
+                <div class="profile-field">
+                    <div class="profile-label">Points de fidélité</div>
+                    <div id="profile-points" style="color: #ff9900; font-weight: bold;">0 points</div>
+                </div>
             </div>
             
             <h2 class="form-title">Historique des commandes</h2>
             <div id="order-history" role="list" aria-label="Historique des commandes">
                 <p style="text-align: center; margin-top: 20px;">Aucune commande passée pour le moment.</p>
+            </div>
+
+            <!-- Section Support -->
+            <div style="margin-top: 40px; background: rgba(0,0,0,0.7); padding: 20px; border-radius: 10px;">
+                <h2 class="form-title">Support Technique</h2>
+                <form id="support-form">
+                    <div class="form-group">
+                        <label for="support-subject">Sujet</label>
+                        <input type="text" id="support-subject" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="support-message">Message</label>
+                        <textarea id="support-message" rows="4" required style="width: 100%; padding: 12px 15px; border-radius: 5px; border: none;"></textarea>
+                    </div>
+                    <button type="submit" class="btn">Envoyer le ticket</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Page Suivi de Commande -->
+        <div id="tracking" class="page" role="region" aria-label="Suivi de commande">
+            <div class="admin-section">
+                <h1 class="form-title">Suivi de Commande</h1>
+                <div id="tracking-content">
+                    <!-- Le suivi sera généré dynamiquement -->
+                </div>
             </div>
         </div>
 
@@ -307,6 +386,17 @@
             <div class="about-section">
                 <h1 class="form-title">À propos de Jwèt Lakay</h1>
                 <p>Jwèt Lakay est votre plateforme de confiance pour le top-up de diamants Free Fire en Haïti. Nous nous engageons à fournir un service rapide, sécurisé et fiable à tous les joueurs de Free Fire.</p>
+                
+                <p><strong>Nouvelles fonctionnalités :</strong></p>
+                <ul style="margin: 15px 0; padding-left: 20px;">
+                    <li>✅ Système de points de fidélité</li>
+                    <li>✅ Promotions automatiques</li>
+                    <li>✅ Suivi de commande en temps réel</li>
+                    <li>✅ Support technique intégré</li>
+                    <li>✅ Analytics avancées</li>
+                    <li>✅ Application mobile (PWA)</li>
+                    <li>✅ Sécurité renforcée</li>
+                </ul>
                 
                 <p>Notre mission est de simplifier l'achat de diamants pour améliorer votre expérience de jeu. Avec Jwèt Lakay, vous pouvez recharger votre compte Free Fire en quelques minutes seulement, sans tracas.</p>
                 
@@ -324,8 +414,9 @@
                 
                 <div class="contact-info">
                     <p><strong>Email:</strong> support.jwetlakay@gmail.com</p>
-                    <p><strong>Téléphone:</strong> +509 39442808</p>
+                    <p><strong>Téléphone:</strong> +509 39 44 28 08</p>
                     <p><strong>Heures d'ouverture:</strong> Lundi - Dimanche, 8h00 - 23h00</p>
+                    <p><strong>Support technique:</strong> Disponible 24h/24 via l'application</p>
                 </div>
                 
                 <form id="contact-form" style="margin-top: 30px;" novalidate>
@@ -362,6 +453,25 @@
         </div>
     </div>
 
+    <!-- Indicateur de son pour notifications -->
+    <div class="sound-indicator no-print" style="display: none;">🔔</div>
+
     <script src="main.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        // Chargement optimisé
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(function(error) {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>
