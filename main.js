@@ -14,7 +14,7 @@ const paymentInfo = {
     },
     natcash: {
         name: "Pierre Louis Jinolyse",
-        number: "+50939442808"
+        number: "+50935669814"
     }
 };
 
